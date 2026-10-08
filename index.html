@@ -66,9 +66,6 @@ ul{padding-left:20px;margin:6px 0}li{margin:5px 0}
 <main>
 <h1>📚 AI Study Buddy</h1>
 <p class="sub">Type a topic, paste notes, or upload a PDF. Get a summary, key terms, flashcards and a quiz.</p>
-<div class="card" style="padding:10px 12px;margin-bottom:14px;font-size:.92rem">
-  🌐 <b>Chrome-ready & mobile-friendly.</b> For friends to open it, publish this HTML online (or use the local Wi‑Fi method in the included instructions).
-</div>
 
 <details class="card" id="set"><summary><b>⚙️ Settings (optional)</b></summary>
 <p class="msg" style="text-align:left">Works with no key using a free public service, which can get busy. For faster, reliable results add a free Gemini key (aistudio.google.com/app/apikey). It stays only in this browser.</p>
@@ -176,7 +173,30 @@ async function generate(){
   }finally{btn.disabled=false}
 }
 
+
+function normalize(d){
+  d=(d&&typeof d==="object")?d:{};
+  const arr=x=>Array.isArray(x)?x:(x?[x]:[]);
+  const str=x=>x==null?"":(typeof x==="string"?x:(x.text||x.value||x.option||String(x)));
+  d.summary=arr(d.summary).map(str).filter(Boolean);
+  d.terms=arr(d.terms).map(t=>({term:str(t.term||t.name||t.word),definition:str(t.definition||t.meaning||t.def)})).filter(t=>t.term);
+  d.quiz=arr(d.quiz||d.questions).map(q=>{
+    const opts=arr(q.options||q.choices).map(str).filter(Boolean).slice(0,4);
+    let a=q.answer!==undefined?q.answer:(q.correct!==undefined?q.correct:q.correctAnswer), idx=-1;
+    if(typeof a==="number")idx=a;
+    else if(typeof a==="string"){const t=a.trim();
+      if(/^\d+$/.test(t))idx=+t;
+      else if(/^[A-Da-d][\).:]?$/.test(t))idx="abcd".indexOf(t[0].toLowerCase());
+      else idx=opts.findIndex(o=>o.trim().toLowerCase()===t.toLowerCase());}
+    if(!(idx>=0&&idx<opts.length))idx=0;
+    return {q:str(q.q||q.question),options:opts,answer:idx,why:str(q.why||q.explanation)};
+  }).filter(q=>q.q&&q.options.length>=2);
+  d.flashcards=arr(d.flashcards||d.cards).map(c=>({front:str(c.front||c.question||c.term||c.q),back:str(c.back||c.answer||c.definition||c.a)})).filter(c=>c.front&&c.back);
+  if(!d.flashcards.length)d.flashcards=d.terms.map(t=>({front:t.term,back:t.definition}));
+  return d;
+}
 function render(){
+  data=normalize(data);
   $("out").classList.remove("hide");
   // summary
   const s=$("sum"); s.replaceChildren(el("h3",null,"Summary")); if(data._level)s.append(el("span","badge","🎯 Level: "+data._level)); if(data.overview)s.append(el("div","ov",data.overview));
@@ -185,7 +205,10 @@ function render(){
     s.append(el("h3",null,"Key terms"));
     data.terms.forEach(t=>{const d=el("div","term");d.append(el("b",null,t.term+": "),document.createTextNode(t.definition));s.append(d)});
   }
-  renderQuiz(); fcIdx=0; fcBack=false; renderFC(); show("sum");
+  try{renderQuiz()}catch(e){$("quiz").textContent="Could not build the quiz. Tap Generate again."}
+  fcIdx=0; fcBack=false;
+  try{renderFC()}catch(e){$("fc").textContent="Could not build flashcards. Tap Generate again."}
+  show("sum");
 }
 
 let qi=0, picks=[];
@@ -283,12 +306,6 @@ $("clr").onclick=()=>{saveH([]);renderH()};
 $("level").onchange=()=>{if(data){$("status").className="msg";$("status").textContent="Level changed. Tap Generate to get a "+$("level").value+" quiz."}};
 renderH();
 
-if(location.protocol==="file:"){
-  const note=el("div","msg");
-  note.innerHTML="ℹ️ You opened the HTML directly. It works in Chrome, but for friends to access it from their phones, publish this file online using the included instructions.";
-  $("status").append(note);
-}
-
 async function callGemini(prompt,key){
   const gm=localStorage.getItem("sb_gmodel")||"gemini-flash-latest";
   const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(gm)+":generateContent?key="+encodeURIComponent(key),{
@@ -310,28 +327,16 @@ async function callAI(prompt){
   throw err;
 }
 async function callPublic(prompt){
-  if(!navigator.onLine) throw new Error("No internet connection. Connect to Wi‑Fi/mobile data and try again.");
   const model=localStorage.getItem("sb_model")||"openai";
-  const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),45000);
-  try{
-    const r=await fetch("https://text.pollinations.ai/openai",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      signal:controller.signal,
-      body:JSON.stringify({model:model,jsonMode:true,messages:[{role:"system",content:"You reply with valid JSON only, no markdown."},{role:"user",content:prompt}]})
-    });
-    if(!r.ok)throw new Error("AI service HTTP "+r.status);
-    const j=await r.json();
-    let t=(j.choices&&j.choices[0].message.content)||"";
-    t=t.replace(/```json|```/g,"").trim();
-    const i=t.indexOf("{"), k=t.lastIndexOf("}");
-    if(i<0||k<0)throw new Error("AI service returned an invalid response.");
-    return JSON.parse(t.slice(i,k+1));
-  }catch(e){
-    if(e.name==="AbortError") throw new Error("The AI service took too long. Try again.");
-    throw e;
-  }finally{clearTimeout(timer)}
+  const r=await fetch("https://text.pollinations.ai/openai",{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({model:model,jsonMode:true,messages:[{role:"system",content:"You reply with valid JSON only, no markdown."},{role:"user",content:prompt}]})});
+  if(!r.ok)throw new Error("HTTP "+r.status);
+  const j=await r.json();
+  let t=(j.choices&&j.choices[0].message.content)||"";
+  t=t.replace(/```json|```/g,"").trim();
+  const i=t.indexOf("{"), k=t.lastIndexOf("}");
+  return JSON.parse(t.slice(i,k+1));
 }
 $("model").value=localStorage.getItem("sb_model")||"openai";
 $("key").value=localStorage.getItem("sb_key")||"";
