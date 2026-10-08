@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI Study Buddy</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#1b1f2a;--mut:#667085;--pri:#5b4bdb;--pri2:#eceafd;--ok:#14864a;--bad:#c62828;--bd:#e3e6ee;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12141c;--card:#1c1f2b;--ink:#eceef5;--mut:#9aa1b5;--pri:#8f82ff;--pri2:#26254a;--ok:#4cd58b;--bad:#ff7b7b;--bd:#2c3042}}
+:root[data-theme="dark"]{--bg:#12141c;--card:#1c1f2b;--ink:#eceef5;--mut:#9aa1b5;--pri:#8f82ff;--pri2:#26254a;--ok:#4cd58b;--bad:#ff7b7b;--bd:#2c3042}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:720px;margin:0 auto;padding:18px 14px 40px}
+h1{margin:0;font-size:1.6rem}.sub{color:var(--mut);margin:4px 0 16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:14px}
+textarea{width:100%;min-height:150px;border:1px solid var(--bd);border-radius:10px;padding:10px;background:var(--bg);color:var(--ink);font:inherit;resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+select{flex:1;min-width:120px;padding:9px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--ink);font:inherit}
+button{font:inherit;cursor:pointer}
+.go{width:100%;padding:12px;border:0;border-radius:10px;background:var(--pri);color:#fff;font-weight:600}
+.go:disabled{opacity:.6}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tab{flex:1;padding:9px 4px;border:1px solid var(--bd);background:var(--card);color:var(--ink);border-radius:10px}
+.tab.on{background:var(--pri2);border-color:var(--pri);color:var(--pri);font-weight:600}
+.hide{display:none}
+ul{padding-left:20px;margin:6px 0}li{margin:5px 0}
+.term{padding:8px 0;border-top:1px solid var(--bd)}.term b{color:var(--pri)}
+.q{margin-bottom:18px}.opt{display:block;width:100%;text-align:left;padding:10px;margin:6px 0;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--ink)}
+.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,transparent)}
+.opt.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 15%,transparent)}
+.why{color:var(--mut);font-size:.92rem;margin-top:4px}
+.fc{min-height:150px;display:flex;align-items:center;justify-content:center;text-align:center;padding:18px;border:2px solid var(--pri);border-radius:14px;background:var(--pri2);font-size:1.1rem;cursor:pointer;user-select:none}
+.nav{display:flex;justify-content:space-between;align-items:center;margin-top:10px;color:var(--mut)}
+.nav button{padding:8px 16px;border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--ink)}
+.msg{color:var(--mut);text-align:center;padding:10px}.err{color:var(--bad)}
+.score{font-weight:700;color:var(--pri)}
+.bar{height:8px;background:var(--bd);border-radius:6px;margin:8px 0 14px;overflow:hidden}.fill{height:100%;background:var(--pri);transition:width .3s}
+.opt:disabled{cursor:default;opacity:1}
+.fb{margin-top:10px;padding:10px;border-radius:10px;background:var(--pri2)}.fb.good b{color:var(--ok)}.fb.wrong b{color:var(--bad)}
+.nx{width:100%;margin-top:12px;padding:11px;border:0;border-radius:10px;background:var(--pri);color:#fff;font-weight:600}
+.ring{width:140px;height:140px;border-radius:50%;margin:8px auto;display:flex;align-items:center;justify-content:center}
+.ring div{width:106px;height:106px;border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:1.9rem;font-weight:800}
+.ring small{font-size:.8rem;font-weight:400;color:var(--mut)}
+.stats{display:flex;gap:8px;margin:12px 0}.stat{flex:1;text-align:center;padding:10px 4px;border:1px solid var(--bd);border-radius:10px}.stat b{display:block;font-size:1.3rem}
+.rv{padding:10px 0;border-top:1px solid var(--bd)}.rv .ok{color:var(--ok)}.rv .bad{color:var(--bad)}
+.btn2{flex:1;padding:11px;border:1px solid var(--pri);border-radius:10px;background:var(--card);color:var(--pri);font-weight:600}
+.up{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.upb{position:relative;overflow:hidden;padding:9px 14px;border:1px dashed var(--pri);border-radius:10px;color:var(--pri);font-weight:600;cursor:pointer;background:var(--pri2)}
+.chip{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--bd);border-radius:20px;font-size:.88rem}
+.chip button{border:0;background:none;color:var(--bad);font-size:1rem}
+.ov{background:var(--pri2);border-radius:10px;padding:10px;margin-bottom:8px}
+.upb input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:200px}
+.hh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.hh button{border:0;background:none;color:var(--bad);font-size:.85rem}
+.hi{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--bd)}
+.ht{flex:1;cursor:pointer;min-width:0}.ht b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hm{color:var(--mut);font-size:.82rem}
+.hx{border:0;background:none;color:var(--mut);font-size:1.05rem;padding:6px}
+.badge{display:inline-block;margin-bottom:8px;padding:3px 10px;border-radius:20px;background:var(--pri2);color:var(--pri);font-size:.85rem;font-weight:600}
+</style>
+</head>
+<body>
+<main>
+<h1>📚 AI Study Buddy</h1>
+<p class="sub">Type a topic, paste notes, or upload a PDF. Get a summary, key terms, flashcards and a quiz.</p>
+<div class="card" style="padding:10px 12px;margin-bottom:14px;font-size:.92rem">
+  🌐 <b>Chrome-ready & mobile-friendly.</b> For friends to open it, publish this HTML online (or use the local Wi‑Fi method in the included instructions).
+</div>
+
+<details class="card" id="set"><summary><b>⚙️ Settings (optional)</b></summary>
+<p class="msg" style="text-align:left">Works with no key using a free public service, which can get busy. For faster, reliable results add a free Gemini key (aistudio.google.com/app/apikey). It stays only in this browser.</p>
+<input id="key" type="password" placeholder="Gemini API key (optional)" style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--ink);font:inherit;margin-bottom:8px">
+<input id="model" placeholder="Public-service model name (default: openai)" style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--ink);font:inherit;margin-bottom:8px">
+<button class="go" id="savekey">Save</button></details>
+<div class="card">
+<textarea id="notes" placeholder="Type a topic or paste notes. With a PDF, you can add a focus here (e.g. 'chapter 2 only')."></textarea>
+<div class="up">
+<div class="upb">📎 Upload PDF / TXT<input type="file" id="file" accept="application/pdf,.pdf,text/plain,.txt"></div>
+<div class="chip hide" id="chip"><span id="chipname"></span><button id="rm" title="Remove file">✕</button></div>
+</div>
+<div class="row">
+<select id="level"><option>Beginner</option><option selected>Intermediate</option><option>Advanced</option></select>
+<select id="count"><option value="3">3 questions</option><option value="5" selected>5 questions</option><option value="8">8 questions</option></select>
+</div>
+<button class="go" id="go">✨ Generate study material</button>
+<div class="msg" id="status"></div>
+</div>
+
+<div class="card hide" id="hist"><div class="hh"><b>🕘 History</b><button id="clr">Clear all</button></div><div id="hlist"></div></div>
+
+<div id="out" class="hide">
+<div class="tabs">
+<button class="tab on" data-t="sum">Summary</button>
+<button class="tab" data-t="quiz">Quiz</button>
+<button class="tab" data-t="fc">Flashcards</button>
+</div>
+<div class="card" id="sum"></div>
+<div class="card hide" id="quiz"></div>
+<div class="card hide" id="fc"></div>
+</div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+let data = null, fcIdx = 0, fcBack = false, score = 0, answered = 0;
+
+function el(tag, cls, text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
+
+let docText="", docName="";
+
+function setDoc(t,n){docText=t;docName=n;$("chip").classList.toggle("hide",!t);$("chipname").textContent="📄 "+n}
+
+async function readFile(f){
+  const st=$("status"); st.className="msg"; st.textContent="📄 Reading file...";
+  try{
+    if(/\.txt$/i.test(f.name)){
+      const t=(await f.text()).trim(); if(t.length<20)throw new Error("empty");
+      setDoc(t.slice(0,28000),f.name+" · "+t.length+" characters");
+    }else{
+      if(!window.pdfjsLib)throw new Error("lib");
+      pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+      const pdf=await pdfjsLib.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise;
+      const pages=[];
+      for(let i=1;i<=pdf.numPages;i++){
+        const tc=await (await pdf.getPage(i)).getTextContent();
+        pages.push(tc.items.map(x=>x.str).join(" ").replace(/\s+/g," ").trim());
+      }
+      const total=pages.join("").length; if(total<50)throw new Error("scan");
+      const MAX=28000, per=Math.max(300,Math.floor(MAX/pages.length)); let out="", cut=false;
+      pages.forEach((t,i)=>{let x=t; if(total>MAX&&x.length>per){x=x.slice(0,per);cut=true} if(x)out+="[Page "+(i+1)+"] "+x+"\n"});
+      setDoc(out,f.name+" · "+pdf.numPages+" pages"+(cut?" (long file: start of each page used)":""));
+    }
+    st.textContent="✅ File ready. Tap Generate.";
+  }catch(e){
+    setDoc("","");
+    st.className="msg err";
+    st.textContent=e.message==="scan"?"No readable text found. This PDF may be scanned images.":e.message==="empty"?"The file looks empty.":"Could not read the file. Try another PDF or paste the text.";
+  }
+}
+
+function buildPrompt(material, focus, level, n, isDoc){
+  return `You are a friendly study tutor. Student level: ${level}.
+${isDoc?"The material is text extracted from a student's document, with [Page N] markers. Use ONLY this document. Mention page numbers in key points and explanations where useful."+(focus?"\nThe student wants this focus: "+focus:""):"Base the study material on the text below (if it is only a topic, use accurate general knowledge)."}
+Return JSON exactly in this shape:
+{"title":"2-6 word title for this topic",
+"overview":"2-3 sentence overview of what the material is about",
+"summary":["6-9 short bullet points covering the main ideas"],
+"terms":[{"term":"","definition":""}],            // 5-8 key terms
+"quiz":[{"q":"","options":["A","B","C","D"],"answer":0,"why":"one-line explanation"}],  // exactly ${n} multiple-choice questions spread across the whole material, answer = index 0-3
+"flashcards":[{"front":"","back":""}]}            // 8-10 cards
+DIFFICULTY RULES (apply ONLY the rule for "${level}" to the summary, terms, flashcards and quiz):
+- Beginner: plain everyday language; basics only; quiz asks simple recall and definition questions with clearly wrong distractors.
+- Intermediate: standard textbook depth; quiz tests understanding and applying concepts, with plausible distractors.
+- Advanced: technical depth with nuances and edge cases; quiz tests analysis, comparison, why/what-if and multi-step reasoning, with subtle, close distractors.
+Keep language clear and concise. Do not invent facts.
+
+MATERIAL:
+"""${material}"""`;
+}
+
+async function generate(){
+  const notes=$("notes").value.trim();
+  if(!docText&&notes.length<3){$("status").className="msg";$("status").textContent="Enter a topic or paste your notes.";return}
+  const btn=$("go"); btn.disabled=true; $("status").className="msg"; $("status").textContent="⏳ Reading and generating your study pack...";
+  try{
+    const material=docText||notes.slice(0,6000);
+    data=await callAI(buildPrompt(material,docText?notes:"",$("level").value,+$("count").value,!!docText));
+    data._level=$("level").value; render(); $("status").textContent="";
+    addH({title:(data.title||notes||"Untitled").slice(0,60),notes:notes.slice(0,500),level:data._level,n:+$("count").value,ts:Date.now(),data});
+  }catch(e){
+    $("status").className="msg err";
+    $("status").textContent="The free service is busy. Try again in a minute, or add a free Gemini key in Settings. ("+(e&&e.message||"error")+")";
+  }finally{btn.disabled=false}
+}
+
+function render(){
+  $("out").classList.remove("hide");
+  // summary
+  const s=$("sum"); s.replaceChildren(el("h3",null,"Summary")); if(data._level)s.append(el("span","badge","🎯 Level: "+data._level)); if(data.overview)s.append(el("div","ov",data.overview));
+  const ul=el("ul"); (data.summary||[]).forEach(t=>ul.append(el("li",null,t))); s.append(ul);
+  if((data.terms||[]).length){
+    s.append(el("h3",null,"Key terms"));
+    data.terms.forEach(t=>{const d=el("div","term");d.append(el("b",null,t.term+": "),document.createTextNode(t.definition));s.append(d)});
+  }
+  renderQuiz(); fcIdx=0; fcBack=false; renderFC(); show("sum");
+}
+
+let qi=0, picks=[];
+function renderQuiz(){ qi=0; picks=[]; score=0; drawQ(); }
+
+function drawQ(){
+  const quiz=data.quiz||[], box=$("quiz"); box.replaceChildren();
+  if(!quiz.length){box.append(el("div","msg","No quiz generated."));return}
+  if(qi>=quiz.length){drawCard();return}
+  const item=quiz[qi];
+  const bar=el("div","bar"), fill=el("div","fill"); fill.style.width=(qi/quiz.length*100)+"%"; bar.append(fill);
+  box.append(el("div","score","Question "+(qi+1)+" of "+quiz.length+"  ·  Score: "+score), bar, el("b",null,item.q));
+  const fb=el("div","fb hide"); const btns=[];
+  (item.options||[]).forEach((o,oi)=>{
+    const b=el("button","opt",o); btns.push(b);
+    b.onclick=()=>{
+      picks[qi]=oi; const right=oi===item.answer; if(right)score++;
+      btns.forEach((x,xi)=>{x.disabled=true; if(xi===item.answer)x.classList.add("ok")});
+      if(!right)b.classList.add("bad");
+      fb.className="fb "+(right?"good":"wrong");
+      fb.replaceChildren(el("b",null,right?"✅ Correct!":"❌ Incorrect. Correct answer: "+item.options[item.answer]), el("div","why","💡 "+(item.why||"")));
+      const nx=el("button","nx",qi+1===quiz.length?"Finish & see score card 🏁":"Next question →");
+      nx.onclick=()=>{qi++;drawQ();box.scrollIntoView({behavior:"smooth"})};
+      box.append(nx);
+    };
+    box.append(b);
+  });
+  box.append(fb);
+}
+
+function drawCard(){
+  const quiz=data.quiz, box=$("quiz"), n=quiz.length, pct=Math.round(score/n*100);
+  const msg=pct===100?"🏆 Perfect! You've mastered this.":pct>=80?"🌟 Excellent work!":pct>=60?"👍 Good job. A little more revision and you'll nail it.":pct>=40?"📖 Keep going. Review the summary and flashcards.":"💪 Don't worry. Study the summary and try again!";
+  box.replaceChildren(el("h3",null,"🎓 Score Card"));
+  const ring=el("div","ring"); ring.style.background="conic-gradient(var(--pri) "+pct+"%, var(--bd) 0)";
+  const inner=el("div",null,pct+"%"); inner.append(el("small",null,score+" / "+n)); ring.append(inner);
+  box.append(ring, el("p","msg",msg));
+  const st=el("div","stats");
+  [["✅ Correct",score],["❌ Wrong",n-score],["📊 Total",n]].forEach(([l,v])=>{const d=el("div","stat");d.append(el("b",null,v),document.createTextNode(l));st.append(d)});
+  box.append(st, el("h3",null,"Answer review"));
+  quiz.forEach((it,i)=>{
+    const r=el("div","rv"), ok=picks[i]===it.answer;
+    r.append(el("b",null,(i+1)+". "+it.q));
+    r.append(el("div",ok?"ok":"bad","Your answer: "+it.options[picks[i]]+(ok?" ✅":" ❌")));
+    if(!ok)r.append(el("div","ok","Correct: "+it.options[it.answer]));
+    r.append(el("div","why","💡 "+(it.why||"")));
+    box.append(r);
+  });
+  const row=el("div","row"), re=el("button","btn2","🔁 Retry quiz"), fc=el("button","btn2","🃏 Flashcards");
+  re.onclick=()=>{renderQuiz()}; fc.onclick=()=>show("fc");
+  row.append(re,fc); box.append(row);
+}
+
+function renderFC(){
+  const cards=data.flashcards||[], box=$("fc"); box.replaceChildren();
+  if(!cards.length){box.append(el("div","msg","No flashcards."));return}
+  const c=cards[fcIdx];
+  const card=el("div","fc",fcBack?c.back:c.front); card.title="Tap to flip";
+  card.onclick=()=>{fcBack=!fcBack;renderFC()};
+  const nav=el("div","nav");
+  const prev=el("button",null,"← Prev"), next=el("button",null,"Next →");
+  prev.onclick=()=>{fcIdx=(fcIdx-1+cards.length)%cards.length;fcBack=false;renderFC()};
+  next.onclick=()=>{fcIdx=(fcIdx+1)%cards.length;fcBack=false;renderFC()};
+  nav.append(prev,el("span",null,(fcIdx+1)+" / "+cards.length+(fcBack?" · answer":" · question")),next);
+  box.append(el("div","msg","Tap the card to flip"),card,nav);
+}
+
+function show(t){
+  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
+  ["sum","quiz","fc"].forEach(id=>$(id).classList.toggle("hide",id!==t));
+}
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>show(b.dataset.t));
+$("go").onclick=generate;
+
+const HK="studybuddy_history_v1";
+function loadH(){try{return JSON.parse(localStorage.getItem(HK)||"[]")}catch(e){return []}}
+function saveH(a){try{localStorage.setItem(HK,JSON.stringify(a))}catch(e){}}
+function addH(entry){
+  let a=loadH(); a.unshift(entry); a=a.slice(0,15);
+  try{localStorage.setItem(HK,JSON.stringify(a))}catch(e){try{localStorage.setItem(HK,JSON.stringify(a.slice(0,5)))}catch(e2){}}
+  renderH();
+}
+function renderH(){
+  const a=loadH(), box=$("hlist"); $("hist").classList.toggle("hide",!a.length); box.replaceChildren();
+  a.forEach((h,i)=>{
+    const r=el("div","hi"), t=el("div","ht");
+    t.append(el("b",null,h.title), el("div","hm",h.level+" · "+h.n+" Qs · "+new Date(h.ts).toLocaleString([],{dateStyle:"medium",timeStyle:"short"})));
+    t.onclick=()=>{$("notes").value=h.notes||"";$("level").value=h.level;$("count").value=String(h.n);data=h.data;render();$("out").scrollIntoView({behavior:"smooth"})};
+    const x=el("button","hx","✕"); x.title="Delete";
+    x.onclick=e=>{e.stopPropagation();const l=loadH();l.splice(i,1);saveH(l);renderH()};
+    r.append(t,x); box.append(r);
+  });
+}
+$("clr").onclick=()=>{saveH([]);renderH()};
+$("level").onchange=()=>{if(data){$("status").className="msg";$("status").textContent="Level changed. Tap Generate to get a "+$("level").value+" quiz."}};
+renderH();
+
+if(location.protocol==="file:"){
+  const note=el("div","msg");
+  note.innerHTML="ℹ️ You opened the HTML directly. It works in Chrome, but for friends to access it from their phones, publish this file online using the included instructions.";
+  $("status").append(note);
+}
+
+async function callGemini(prompt,key){
+  const gm=localStorage.getItem("sb_gmodel")||"gemini-flash-latest";
+  const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(gm)+":generateContent?key="+encodeURIComponent(key),{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{responseMimeType:"application/json"}})});
+  const j=await r.json();
+  if(!r.ok)throw new Error((j.error&&j.error.message)||("HTTP "+r.status));
+  const t=j.candidates[0].content.parts.map(p=>p.text||"").join("").replace(/```json|```/g,"").trim();
+  return JSON.parse(t);
+}
+async function callAI(prompt){
+  const key=localStorage.getItem("sb_key")||"";
+  if(key)return callGemini(prompt,key);
+  let err;
+  for(let i=0;i<4;i++){
+    try{ if(i)$("status").textContent="⏳ Service busy, retrying ("+i+"/3)..."; return await callPublic(prompt); }
+    catch(e){err=e; await new Promise(r=>setTimeout(r,3000*(i+1)))}
+  }
+  throw err;
+}
+async function callPublic(prompt){
+  if(!navigator.onLine) throw new Error("No internet connection. Connect to Wi‑Fi/mobile data and try again.");
+  const model=localStorage.getItem("sb_model")||"openai";
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),45000);
+  try{
+    const r=await fetch("https://text.pollinations.ai/openai",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      signal:controller.signal,
+      body:JSON.stringify({model:model,jsonMode:true,messages:[{role:"system",content:"You reply with valid JSON only, no markdown."},{role:"user",content:prompt}]})
+    });
+    if(!r.ok)throw new Error("AI service HTTP "+r.status);
+    const j=await r.json();
+    let t=(j.choices&&j.choices[0].message.content)||"";
+    t=t.replace(/```json|```/g,"").trim();
+    const i=t.indexOf("{"), k=t.lastIndexOf("}");
+    if(i<0||k<0)throw new Error("AI service returned an invalid response.");
+    return JSON.parse(t.slice(i,k+1));
+  }catch(e){
+    if(e.name==="AbortError") throw new Error("The AI service took too long. Try again.");
+    throw e;
+  }finally{clearTimeout(timer)}
+}
+$("model").value=localStorage.getItem("sb_model")||"openai";
+$("key").value=localStorage.getItem("sb_key")||"";
+$("savekey").onclick=()=>{try{localStorage.setItem("sb_model",$("model").value.trim()||"openai");localStorage.setItem("sb_key",$("key").value.trim());$("set").open=false;$("status").className="msg";$("status").textContent="✅ Saved."}catch(e){$("status").textContent="Could not save."}};
+$("file").onchange=e=>{const f=e.target.files[0];if(f)readFile(f);e.target.value=""};
+$("rm").onclick=()=>{setDoc("","");$("status").textContent=""};
+</script>
+</body>
+</html>
